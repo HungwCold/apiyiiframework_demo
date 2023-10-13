@@ -43,7 +43,6 @@ class ApiProductsController extends Controller
         $data = Products::find()->asArray()->all(); // edit here
         header("Content-type: application/json; charset=utf-8");
         echo json_encode($data); die;
-        return $this->render('index', array('data' => $data ));
       
     }
 
