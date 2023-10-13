@@ -2,166 +2,133 @@
 
 namespace app\controllers;
 
-use Yii;
-use yii\filters\AccessControl;
+use app\models\Products;
+use app\models\ProductSearch;
 use yii\web\Controller;
-use yii\web\Response;
+use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
-use app\models\EntryForm;
 
+/**
+ * ProductsController implements the CRUD actions for Products model.
+ */
 class SiteController extends Controller
 {
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function behaviors()
     {
-        return [
-            'access' => [
-                'class' => AccessControl::class,
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
+        return array_merge(
+            parent::behaviors(),
+            [
+                'verbs' => [
+                    'class' => VerbFilter::className(),
+                    'actions' => [
+                        'delete' => ['POST'],
                     ],
                 ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
+            ]
+        );
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
-        ];
-    }
-
-    /**
-     * Displays homepage.
+     * Lists all Products models.
      *
      * @return string
      */
     public function actionIndex()
     {
-        return $this->render('index');
-    }
+        $searchModel = new ProductSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
 
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
     /**
-     * Logout action.
-     *
-     * @return Response
-     */
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
+     * Displays a single Products model.
+     * @param int $id ID
      * @return string
+     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionAbout()
+    public function actionView($id)
     {
-        return $this->render('about');
-    }
-
-
-
-     public function actionSay($message = 'Hello')
-    {
-        $connection = new \yii\db\Connection([
-            'dsn' => 'mysql:host=localhost:3306;dbname=demo',
-            'username' => 'root',
-            'password' => 'root123',
-            'charset' => 'utf8',
+        return $this->render('view', [
+            'model' => $this->findModel($id),
         ]);
-        $connection->open();
-        $command = $connection->createCommand('SELECT * FROM products Limit 4');
-        $posts = $command->queryAll();
-        var_dump($posts); die;
-        return $this->render('say', ['message' => $message]);
     }
 
-
-    public function actionEntry()
+    /**
+     * Creates a new Products model.
+     * If creation is successful, the browser will be redirected to the 'view' page.
+     * @return string|\yii\web\Response
+     */
+    public function actionCreate()
     {
-        $model = new EntryForm();
+        $model = new Products();
 
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            // valid data received in $model
-
-            // do something meaningful here about $model ...
-
-            return $this->render('entry-confirm', ['model' => $model]);
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         } else {
-            // either the page is initially displayed or there is some validation error
-            return $this->render('entry', ['model' => $model]);
+            $model->loadDefaultValues();
         }
+
+        return $this->render('create', [
+            'model' => $model,
+        ]);
     }
 
+    /**
+     * Updates an existing Products model.
+     * If update is successful, the browser will be redirected to the 'view' page.
+     * @param int $id ID
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionUpdate($id)
+    {
+        $model = $this->findModel($id);
 
+        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
+        }
 
-    
+        return $this->render('update', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Deletes an existing Products model.
+     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @param int $id ID
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionDelete($id)
+    {
+        $this->findModel($id)->delete();
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Finds the Products model based on its primary key value.
+     * If the model is not found, a 404 HTTP exception will be thrown.
+     * @param int $id ID
+     * @return Products the loaded model
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    protected function findModel($id)
+    {
+        if (($model = Products::findOne(['id' => $id])) !== null) {
+            return $model;
+        }
+
+        throw new NotFoundHttpException('The requested page does not exist.');
+    }
 }

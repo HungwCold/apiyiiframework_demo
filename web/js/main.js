@@ -11,22 +11,14 @@
 
 	$.ajax({
 		type: 'GET',
-		url: 'http://localhost:8080/demo/Data.php',
+		url: 'http://localhost:8080/yiiframework/web/index.php?r=api-products%2Findex',
 		dataType: 'JSON',
 		success: function(data) {
 			renderItemProducts(data);
 		}
 	});
 
-
-
-
-
-
-	//  code api bằng Javascript
-
-
-function renderItemProducts(data) {
+	function renderItemProducts(data) {
 		var html= `<div class="products-slick" data-nav="#slick-nav-1">`;
 
 		for (let i = 0; i < data.length; i++) 
@@ -69,15 +61,6 @@ function renderItemProducts(data) {
 			slidesToScroll: 4
 		  });
 	}
-
-
-
-
-
-
-
-
-
 
 
 	// Mobile Nav toggle
